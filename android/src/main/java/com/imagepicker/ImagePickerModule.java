@@ -31,6 +31,8 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableMap;
 
+import fr.bamlab.rnimageresizer.ImageResizer;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -417,7 +419,20 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
       response.putInt("width", initialWidth);
       response.putInt("height", initialHeight);
     } else {
-      File resized = getResizedImage(realPath, initialWidth, initialHeight);
+      // Use the react-native-image-resizer library to do sampled resize,
+      // in lieu of using the baked in resize method (which OOMs on large images.)
+      String resizedPath =
+        ImageResizer.createResizedImage(
+          mReactContext,
+          uri,
+          (0 == maxWidth) ? initialWidth : maxWidth,
+          (0 == maxHeight) ? initialHeight : maxHeight,
+          Bitmap.CompressFormat.JPEG,
+          quality,
+          currentRotation,
+          null /* outputPath */
+        );
+      File resized = new File(resizedPath);
       if (resized == null) {
         response.putString("error", "Can't resize the image");
       } else {
